@@ -23,10 +23,16 @@ fn main() {
                     for lineage in tax.split(',') {
                         if lineage.contains('(') {
                             let lineages: Vec<&str> = lineage.trim().split(|c| c == '(' || c == ')').collect();
-                            println!("{}\t{}\t{}\n", r[0], lineages[0], lineages[1]);
+                            if let Some(ncbi) = r[0].get_string() {
+                                println!("{}\t{}\t{}\n", ncbi, lineages[0], lineages[1]);
+                                archaea_map.insert(String::from(lineages[0]), vec!(String::from(ncbi), String::from(lineages[1])));
+                            }
                         } else {
                             let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
-                            println!("{}\t{}\n", r[0], lineages[1]);
+                            if let Some(ncbi) = r[0].get_string() {
+                                println!("{}\t{}\n", ncbi, lineages[1]);
+                                archaea_map.insert(String::from(lineages[1]), vec!(String::from(ncbi)));
+                            }
                         }
                     }
                 }
@@ -35,5 +41,6 @@ fn main() {
     }
 
     assert_eq!(archaea_excel.sheet_names(), bacteria_excel.sheet_names());
+    println!("{:?}", archaea_map);
 
 }
