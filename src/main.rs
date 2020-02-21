@@ -1,8 +1,8 @@
 extern crate calamine;
-use calamine::{Xlsx, Reader};
+use calamine::{Reader, Xlsx};
 
-use std::io::Cursor;
 use std::collections::HashMap;
+use std::io::Cursor;
 use std::result::Result;
 
 fn main() {
@@ -29,16 +29,20 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
                 if let Some(gtdb) = r[3].get_string() {
                     for lineage in gtdb.split(',') {
                         if lineage.contains('(') {
-                            let lineages: Vec<&str> = lineage.trim().split(|c| c == '(' || c == ')').collect();
+                            let lineages: Vec<&str> =
+                                lineage.trim().split(|c| c == '(' || c == ')').collect();
                             if let Some(ncbi) = r[0].get_string() {
                                 // println!("{}\t{}\t{}\n", ncbi, lineages[0], lineages[1]);
-                                map.insert(String::from(lineages[0]), vec!(String::from(ncbi), String::from(lineages[1])));
+                                map.insert(
+                                    String::from(lineages[0]),
+                                    vec![String::from(ncbi), String::from(lineages[1])],
+                                );
                             }
                         } else {
                             let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
                             if let Some(ncbi) = r[0].get_string() {
                                 // println!("{}\t{}\n", ncbi, lineages[1]);
-                                map.insert(String::from(lineages[1]), vec!(String::from(ncbi)));
+                                map.insert(String::from(lineages[1]), vec![String::from(ncbi)]);
                             }
                         }
                     }
@@ -49,14 +53,29 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
     map
 }
 
-fn parse2(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, (String, String)> {
+fn parse_gtdb(gtdb: &str, ncbi: &str) {
+    gtdb.split(',')
+        .map(|lineage| {
+            if lineage.contains('(') {
+                let lineages: Vec<&str> = lineage.trim().split(|c| c == '(' || c == ')').collect();
+                (
+                    String::from(lineages[0]),
+                    vec![String::from(ncbi), String::from(lineages[1])],
+                )
+            } else {
+                let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
+                (String::from(lineages[1]), vec![String::from(ncbi)])
+            }
+        })
+        .collect::<Vec<(String, Vec<String>)>>();
+}
+
+fn parse3(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, (String, String)> {
     let reader = Cursor::new(raw_xlsx);
     let mut excel: Xlsx<_> = Xlsx::new(reader).unwrap();
     let sheets = excel.sheet_names().to_owned();
-    
-    let mut tax_map: HashMap<String, Vec<String>> = HashMap::new();
 
-    sheets
+    let mut tax_map = sheets
         .iter()
         .map(|name| {
             let range = excel.worksheet_range(name);
@@ -65,35 +84,27 @@ fn parse2(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, (String, Stri
                 Some(Err(err)) => Err((name.clone(), format!("{}", err))),
                 Some(Ok(sheet)) => Ok({
                     sheet
-                    .rows()
-                    .skip(1)
-                    .enumerate()
-                    .map(|(i, row)| 
-                        match row[0].get_string() {
-                            None => Err((name.clone(), format!("sheet {} row:{} col:1 is empty", name, i))),
-                            Some(ncbi) => {
-                                match row[3].get_string() {
-                                    None => Err((name.clone(), format!("sheet {} row:{} col:4 is empty", name, i))),
-                                    Some(gtdb) => Ok({
-                                        gtdb
-                                            .split(',')
-                                            .map(|lineage|
-                                                if lineage.contains('(') {
-                                                    let lineages: Vec<&str> = lineage.trim().split(|c| c == '(' || c == ')').collect();
-                                                    tax_map.insert(String::from(lineages[0]), vec!(String::from(ncbi), String::from(lineages[1])));
-                                                } else {
-                                                    let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
-                                                    tax_map.insert(String::from(lineages[1]), vec!(String::from(ncbi)));
-                                                }
-                                            )
-                                    })
-                                }
-                            }
-                        }
-                    )
-                })
+                        .rows()
+                        .skip(1)
+                        .enumerate()
+                        .map(|(i, row)| match row[0].get_string() {
+                            None => Err((
+                                name.clone(),
+                                format!("sheet {} row:{} col:1 is empty", name, i),
+                            )),
+                            Some(ncbi) => match row[3].get_string() {
+                                None => Err((
+                                    name.clone(),
+                                    format!("sheet {} row:{} col:4 is empty", name, i),
+                                )),
+                                Some(gtdb) => Ok({ parse_gtdb(gtdb, ncbi) }),
+                            },
+                        })
+                        .into_iter()
+                }),
             }
-        });
+        })
+        .collect::<HashMap<String, Vec<String>>>();
 
     Ok(tax_map)
 }
