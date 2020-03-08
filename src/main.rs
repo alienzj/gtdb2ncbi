@@ -1,9 +1,9 @@
 extern crate calamine;
-use calamine::{DataType, Range, Reader, Xlsx};
-
+use calamine::{Reader, Xlsx};
+//use calamine::{DataType, Range};
 use std::collections::HashMap;
 use std::io::Cursor;
-use std::result::Result;
+//use std::result::Result;
 
 fn main() {
     const ARCHAEA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_archaea.xlsx");
@@ -53,6 +53,7 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
     map
 }
 
+/*
 fn parse_gtdb(gtdb: &str, ncbi: &str) -> Vec<(String, Vec<String>)> {
     gtdb.split(',')
         .map(|lineage| {
@@ -99,7 +100,9 @@ fn parse_excel(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, String> 
             Some(Err(err)) => Err(format!("{}", err)),
             Some(Ok(sheet)) => parse_sheet(sheet, name),
         })
+        // TODO
         .collect();
 
     Ok(tax_map)
 }
+*/
