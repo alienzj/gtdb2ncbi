@@ -1,5 +1,5 @@
 extern crate calamine;
-use calamine::{Reader, Xlsx};
+use calamine::{DataType, Range, Reader, Xlsx};
 
 use std::collections::HashMap;
 use std::io::Cursor;
@@ -53,7 +53,7 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
     map
 }
 
-fn parse_gtdb(gtdb: &str, ncbi: &str) {
+fn parse_gtdb(gtdb: &str, ncbi: &str) -> Vec<(String, Vec<String>)> {
     gtdb.split(',')
         .map(|lineage| {
             if lineage.contains('(') {
@@ -67,44 +67,39 @@ fn parse_gtdb(gtdb: &str, ncbi: &str) {
                 (String::from(lineages[1]), vec![String::from(ncbi)])
             }
         })
-        .collect::<Vec<(String, Vec<String>)>>();
+        .collect::<Vec<(String, Vec<String>)>>()
 }
 
-fn parse3(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, (String, String)> {
+fn parse_sheet(
+    sheet: Range<DataType>,
+    name: &str,
+) -> Result<Vec<Result<Vec<(String, Vec<String>)>, String>>, String> {
+    Ok(sheet
+        .rows()
+        .skip(1)
+        .map(|row| match row[0].get_string() {
+            None => Err(format!("sheet {} is empty", name)),
+            Some(ncbi) => match row[3].get_string() {
+                None => Err(format!("sheet{} is empty", name)),
+                Some(gtdb) => Ok(parse_gtdb(gtdb, ncbi)),
+            },
+        })
+        .collect())
+}
+
+fn parse_excel(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, String> {
     let reader = Cursor::new(raw_xlsx);
     let mut excel: Xlsx<_> = Xlsx::new(reader).unwrap();
-    let sheets = excel.sheet_names().to_owned();
 
-    let mut tax_map = sheets
-        .iter()
-        .map(|name| {
-            let range = excel.worksheet_range(name);
-            match range {
-                None => Err((name.clone(), format!("sheet {} is empty", name))),
-                Some(Err(err)) => Err((name.clone(), format!("{}", err))),
-                Some(Ok(sheet)) => Ok({
-                    sheet
-                        .rows()
-                        .skip(1)
-                        .enumerate()
-                        .map(|(i, row)| match row[0].get_string() {
-                            None => Err((
-                                name.clone(),
-                                format!("sheet {} row:{} col:1 is empty", name, i),
-                            )),
-                            Some(ncbi) => match row[3].get_string() {
-                                None => Err((
-                                    name.clone(),
-                                    format!("sheet {} row:{} col:4 is empty", name, i),
-                                )),
-                                Some(gtdb) => Ok({ parse_gtdb(gtdb, ncbi) }),
-                            },
-                        })
-                        .into_iter()
-                }),
-            }
+    let mut tax_map: HashMap<String, Vec<String>> = excel
+        .sheet_names()
+        .into_iter()
+        .map(|name| match excel.worksheet_range(name) {
+            None => Err(format!("sheet {} is empty", name)),
+            Some(Err(err)) => Err(format!("{}", err)),
+            Some(Ok(sheet)) => parse_sheet(sheet, name),
         })
-        .collect::<HashMap<String, Vec<String>>>();
+        .collect();
 
     Ok(tax_map)
 }
