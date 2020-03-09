@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 calamine = "0.16.1"
+clap = "2.33.0"
 
 [[bin]]
 name = "gtdb2ncbi"

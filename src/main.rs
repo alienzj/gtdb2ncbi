@@ -1,9 +1,13 @@
 extern crate calamine;
+extern crate clap;
+
 use calamine::{Reader, Xlsx};
 //use calamine::{DataType, Range};
 use std::collections::HashMap;
 use std::io::Cursor;
 //use std::result::Result;
+
+use clap::{App, Arg, SubCommand};
 
 fn main() {
     const ARCHAEA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_archaea.xlsx");
@@ -12,8 +16,36 @@ fn main() {
     let archaea_map = parse(ARCHAEA_XLSX);
     let bacteria_map = parse(BACTERIA_XLSX);
 
-    println!("{:?}", archaea_map);
-    println!("{:?}", bacteria_map);
+    //println!("{:?}", archaea_map);
+    //println!("{:?}", bacteria_map);
+
+    let matches = App::new("gtdb2ncbi")
+        .version("0.1")
+        .author("alienzj <alienchuj@gmail.com>")
+        .about("convert taxonomy system from GTDB to NCBI")
+        .arg(
+            Arg::with_name("input")
+                .short("i")
+                .long("input")
+                .value_name("FILE")
+                .help("GTDB taxonomy input file")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .value_name("FILE")
+                .help("NCBI taxonomy output file")
+                .takes_value(true),
+        )
+        .get_matches();
+
+    let input = matches.value_of("input").unwrap();
+    let output = matches.value_of("output").unwrap();
+
+    println!("input is {}, output is {}", input, output);
+
 }
 
 fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
