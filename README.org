@@ -1,0 +1,27 @@
+#+TITLE:  gtdb2ncbi
+#+DATE:    March 9, 2020
+#+SINCE:   {replace with next tagged release version}
+#+STARTUP: inlineimages nofold
+
+* Table of Contents :TOC_3:noexport:
+- [[#description][Description]]
+- [[#prerequisites][Prerequisites]]
+- [[#run][Run]]
+- [[#results][Results]]
+
+* Description
+A command line tool which convert taxonomy system from GTDB to NCBI.
+
+* Prerequisites
+- Microbiology
+
+* Run
+#+BEGIN_SRC bash
+git clone https://github.com/alienzj/gtdb2ncbi
+cd gtdb2ncbi
+cargo build --release
+./target/release/gtdb2ncbi --input tests/oral_mgs_gtdb_classification.tsv --output temp
+#+END_SRC
+
+* Results
+[[file:tests/gtdb2ncbi_oral_mgs.jpg][Oral mgs taxonomy system from GTDB to NCBI]]
