@@ -1,13 +1,14 @@
 extern crate calamine;
 extern crate clap;
+extern crate csv;
 
 use calamine::{Reader, Xlsx};
-//use calamine::{DataType, Range};
+use clap::{App, Arg};
+use csv::{ReaderBuilder, Trim};
+
 use std::collections::HashMap;
 use std::io::Cursor;
-//use std::result::Result;
-
-use clap::{App, Arg, SubCommand};
+use std::process;
 
 fn main() {
     const ARCHAEA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_archaea.xlsx");
@@ -15,9 +16,6 @@ fn main() {
 
     let archaea_map = parse(ARCHAEA_XLSX);
     let bacteria_map = parse(BACTERIA_XLSX);
-
-    //println!("{:?}", archaea_map);
-    //println!("{:?}", bacteria_map);
 
     let matches = App::new("gtdb2ncbi")
         .version("0.1")
@@ -41,11 +39,60 @@ fn main() {
         )
         .get_matches();
 
-    let input = matches.value_of("input").unwrap();
-    let output = matches.value_of("output").unwrap();
+    let input = matches.value_of("input").unwrap_or_else(|| {
+        eprintln!("please supply --input [FILE]");
+        process::exit(1);
+    });
+    let output = matches.value_of("output").unwrap_or_else(|| {
+        eprintln!("please supply --output [FILE]");
+        process::exit(1);
+    });
 
-    println!("input is {}, output is {}", input, output);
+    let mut rdr = ReaderBuilder::new()
+        .trim(Trim::All)
+        .delimiter(b'\t')
+        .from_path(input)
+        .unwrap();
 
+    for result in rdr.records() {
+        let record = result.unwrap();
+        // we assume the gtdb classification locate at the 3th column
+        let classification = record.get(2).unwrap();
+
+        let lineages: Vec<&str> = classification.split(';').rev().collect();
+
+        for i in 0..lineages.len() {
+            match archaea_map.get_key_value(lineages[i]) {
+                Some(v) => {
+                    if v.1.len() == 1 {
+                        print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                    } else {
+                        if lineages[i + 1] == v.1[1] {
+                            print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                        } else {
+                            print!("{}({}_ncbi?);", lineages[i], v.1[0]);
+                        }
+                    }
+                }
+                None => match bacteria_map.get_key_value(lineages[i]) {
+                    Some(v) => {
+                        if v.1.len() == 1 {
+                            print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                        } else {
+                            if lineages[i + 1] == v.1[1] {
+                                print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                            } else {
+                                print!("{}({}_ncbi_?);", lineages[i], v.1[0]);
+                            }
+                        }
+                    }
+                    None => print!("{}(_ncbi_unknown);", lineages[i]),
+                },
+            }
+        }
+
+        println!("{}\n", lineages.last().unwrap());
+    }
 }
 
 fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
@@ -132,7 +179,7 @@ fn parse_excel(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, String> 
             Some(Err(err)) => Err(format!("{}", err)),
             Some(Ok(sheet)) => parse_sheet(sheet, name),
         })
-        // TODO
+        // FIXME
         .collect();
 
     Ok(tax_map)
