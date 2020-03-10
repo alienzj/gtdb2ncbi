@@ -18,10 +18,16 @@ A command line tool which convert taxonomy system from GTDB to NCBI.
 * Run
 #+BEGIN_SRC bash
 git clone https://github.com/alienzj/gtdb2ncbi
+
 cd gtdb2ncbi
 cargo build --release
-./target/release/gtdb2ncbi --input tests/oral_mgs_gtdb_classification.tsv --output temp
+
+./target/release/gtdb2ncbi --input tests/oral_mgs_gtdb_classification.tsv --output tests/oral_mgs_gtdb_classification_add_ncbi.tsv
 #+END_SRC
 
 * Results
+- stdout
 [[file:tests/gtdb2ncbi_oral_mgs.png]]
+
+- output
+[[file:tests/gtdb2ncbi_oral_mgs_2.png]]
