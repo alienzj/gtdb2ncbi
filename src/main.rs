@@ -4,7 +4,7 @@ extern crate csv;
 
 use calamine::{Reader, Xlsx};
 use clap::{App, Arg};
-use csv::{ReaderBuilder, Trim};
+use csv::{ReaderBuilder, Trim, WriterBuilder};
 
 use std::collections::HashMap;
 use std::io::Cursor;
@@ -54,6 +54,11 @@ fn main() {
         .from_path(input)
         .unwrap();
 
+    let mut wtr = WriterBuilder::new()
+        .delimiter(b'\t')
+        .from_path(output)
+        .unwrap();
+
     for result in rdr.records() {
         let record = result.unwrap();
         // we assume the gtdb classification locate at the 3th column
@@ -61,16 +66,30 @@ fn main() {
 
         let lineages: Vec<&str> = classification.split(';').rev().collect();
 
-        for i in 0..lineages.len() {
+        let mut classification_ = String::new();
+
+        for i in 0..(lineages.len() - 1) {
             match archaea_map.get(lineages[i]) {
                 Some(v) => {
                     if v.len() == 1 {
                         print!("{}({}_ncbi);", lineages[i], v[0]);
+                        classification_ = String::from(";")
+                            + &v[0]
+                            + &String::from("_ncbi")
+                            + &classification_;
                     } else {
                         if lineages[i + 1] == v[1] {
                             print!("{}({}_ncbi);", lineages[i], v[0]);
+                            classification_ = String::from(";")
+                                + &v[0]
+                                + &String::from("_ncbi")
+                                + &classification_;
                         } else {
                             print!("{}({}_ncbi?);", lineages[i], v[0]);
+                            classification_ = String::from(";")
+                                + &v[0]
+                                + &String::from("_ncbi?")
+                                + &classification_;
                         }
                     }
                 }
@@ -78,20 +97,42 @@ fn main() {
                     Some(v) => {
                         if v.len() == 1 {
                             print!("{}({}_ncbi);", lineages[i], v[0]);
+                            classification_ = String::from(";")
+                                + &v[0]
+                                + &String::from("_ncbi")
+                                + &classification_;
                         } else {
                             if lineages[i + 1] == v[1] {
                                 print!("{}({}_ncbi);", lineages[i], v[0]);
+                                classification_ = String::from(";")
+                                    + &v[0]
+                                    + &String::from("_ncbi")
+                                    + &classification_;
                             } else {
                                 print!("{}({}_ncbi_?);", lineages[i], v[0]);
+                                classification_ = String::from(";")
+                                    + &v[0]
+                                    + &String::from("_ncbi?")
+                                    + &classification_;
                             }
                         }
                     }
-                    None => print!("{}(_ncbi_unknown);", lineages[i]),
+                    None => {
+                        let level: Vec<&str> = lineages[i].split("__").collect();
+                        print!("{}({}__ncbi_unknown);", lineages[i], level[0]);
+                        classification_ = String::from(";")
+                            + &level[0]
+                            + &String::from("__ncbi_unknown")
+                            + &classification_;
+                    }
                 },
             }
         }
 
-        println!("{}\n", lineages.last().unwrap());
+        println!("{}", lineages.last().unwrap());
+        classification_ = String::from("") + lineages.last().unwrap() + &classification_;
+
+        println!("{}\n", classification_);
     }
 }
 
