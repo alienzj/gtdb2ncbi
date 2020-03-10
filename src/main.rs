@@ -73,23 +73,23 @@ fn main() {
         for i in 0..(lineages.len() - 1) {
             match archaea_map.get(lineages[i]) {
                 Some(v) => {
-                    if v.len() == 1 {
-                        classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                    if v.len() == 2 {
+                        classification_ncbi = String::from(";") + &v[1] + &classification_ncbi;
                         classification_sensitive = String::from(";")
-                            + &v[0]
+                            + &v[1]
                             + &String::from("__NCBI")
                             + &classification_sensitive;
                     } else {
-                        if lineages[i + 1] == v[1] {
-                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                        if lineages[i + 1] == v[2] {
+                            classification_ncbi = String::from(";") + &v[1] + &classification_ncbi;
                             classification_sensitive = String::from(";")
-                                + &v[0]
+                                + &v[1]
                                 + &String::from("__NCBI")
                                 + &classification_sensitive;
                         } else {
-                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                            classification_ncbi = String::from(";") + &v[1] + &classification_ncbi;
                             classification_sensitive = String::from(";")
-                                + &v[0]
+                                + &v[1]
                                 + &String::from("__NCBI?")
                                 + &classification_sensitive;
                         }
@@ -97,25 +97,25 @@ fn main() {
                 }
                 None => match bacteria_map.get(lineages[i]) {
                     Some(v) => {
-                        if v.len() == 1 {
-                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                        if v.len() == 2 {
+                            classification_ncbi = String::from(";") + &v[1] + &classification_ncbi;
                             classification_sensitive = String::from(";")
-                                + &v[0]
+                                + &v[1]
                                 + &String::from("__NCBI")
                                 + &classification_sensitive;
                         } else {
-                            if lineages[i + 1] == v[1] {
+                            if lineages[i + 1] == v[2] {
                                 classification_ncbi =
-                                    String::from(";") + &v[0] + &classification_ncbi;
+                                    String::from(";") + &v[1] + &classification_ncbi;
                                 classification_sensitive = String::from(";")
-                                    + &v[0]
+                                    + &v[1]
                                     + &String::from("__NCBI")
                                     + &classification_sensitive;
                             } else {
                                 classification_ncbi =
-                                    String::from(";") + &v[0] + &classification_ncbi;
+                                    String::from(";") + &v[1] + &classification_ncbi;
                                 classification_sensitive = String::from(";")
-                                    + &v[0]
+                                    + &v[1]
                                     + &String::from("__NCBI?")
                                     + &classification_sensitive;
                             }
@@ -173,23 +173,62 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
                     if let Some(ncbi) = r[0].get_string() {
                         for lineage in gtdb.split(',') {
                             if lineage.contains('(') {
-                                let lineages: Vec<&str> =
-                                    lineage.trim().split(|c| c == '(' || c == ')').collect();
-                                // println!("{}\t{}\t{}\n", ncbi, lineages[0], lineages[1]);
+                                let lineages: Vec<&str> = lineage
+                                    .trim()
+                                    .split(|c| c == '(' || c == ')' || c == '%')
+                                    .collect();
+
                                 let key = String::from(lineages[0]);
+                                let percent = lineages[2].trim().trim_start_matches('<');
+
                                 if !map.contains_key(&key) {
                                     map.insert(
                                         key,
-                                        vec![String::from(ncbi), String::from(lineages[1])],
+                                        vec![
+                                            String::from(percent),
+                                            String::from(ncbi),
+                                            String::from(lineages[1]),
+                                        ],
                                     );
+                                } else {
+                                    println!("percent: {}", percent);
+                                    let percent_1: f32 = map.get(&key).unwrap()[0].parse().unwrap();
+                                    let percent_2: f32 = percent.parse().unwrap();
+                                    if (percent_2 - percent_1) > 20.0 {
+                                        map.insert(
+                                            key,
+                                            vec![
+                                                String::from(percent),
+                                                String::from(ncbi),
+                                                String::from(lineages[1]),
+                                            ],
+                                        );
+                                    }
                                 }
                             } else {
                                 let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
-                                // println!("{}\t{}\n", ncbi, lineages[1]);
+
                                 let key = String::from(lineages[1]);
+                                let percent = lineages[0]
+                                    .trim()
+                                    .trim_start_matches('<')
+                                    .trim_end_matches('%');
 
                                 if !map.contains_key(&key) {
-                                    map.insert(key, vec![String::from(ncbi)]);
+                                    map.insert(
+                                        key,
+                                        vec![String::from(percent), String::from(ncbi)],
+                                    );
+                                } else {
+                                    println!("percent: {}", percent);
+                                    let percent_1: f32 = map.get(&key).unwrap()[0].parse().unwrap();
+                                    let percent_2: f32 = percent.parse().unwrap();
+                                    if (percent_2 - percent_1) > 20.0 {
+                                        map.insert(
+                                            key,
+                                            vec![String::from(percent), String::from(ncbi)],
+                                        );
+                                    }
                                 }
                             }
                         }
