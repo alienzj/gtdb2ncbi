@@ -144,7 +144,8 @@ fn main() {
         }
 
         classification_ncbi = String::from("") + lineages.last().unwrap() + &classification_ncbi;
-        classification_sensitive = String::from("") + lineages.last().unwrap() + &classification_sensitive;
+        classification_sensitive =
+            String::from("") + lineages.last().unwrap() + &classification_sensitive;
 
         println!("{}", classification);
         println!("{}", classification_sensitive);
@@ -169,22 +170,27 @@ fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
         if let Some(Ok(range)) = excel.worksheet_range(&s) {
             for r in range.rows().skip(1) {
                 if let Some(gtdb) = r[3].get_string() {
-                    for lineage in gtdb.split(',') {
-                        if lineage.contains('(') {
-                            let lineages: Vec<&str> =
-                                lineage.trim().split(|c| c == '(' || c == ')').collect();
-                            if let Some(ncbi) = r[0].get_string() {
+                    if let Some(ncbi) = r[0].get_string() {
+                        for lineage in gtdb.split(',') {
+                            if lineage.contains('(') {
+                                let lineages: Vec<&str> =
+                                    lineage.trim().split(|c| c == '(' || c == ')').collect();
                                 // println!("{}\t{}\t{}\n", ncbi, lineages[0], lineages[1]);
-                                map.insert(
-                                    String::from(lineages[0]),
-                                    vec![String::from(ncbi), String::from(lineages[1])],
-                                );
-                            }
-                        } else {
-                            let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
-                            if let Some(ncbi) = r[0].get_string() {
+                                let key = String::from(lineages[0]);
+                                if !map.contains_key(&key) {
+                                    map.insert(
+                                        key,
+                                        vec![String::from(ncbi), String::from(lineages[1])],
+                                    );
+                                }
+                            } else {
+                                let lineages: Vec<&str> = lineage.trim().rsplitn(2, ' ').collect();
                                 // println!("{}\t{}\n", ncbi, lineages[1]);
-                                map.insert(String::from(lineages[1]), vec![String::from(ncbi)]);
+                                let key = String::from(lineages[1]);
+
+                                if !map.contains_key(&key) {
+                                    map.insert(key, vec![String::from(ncbi)]);
+                                }
                             }
                         }
                     }
