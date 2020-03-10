@@ -66,73 +66,90 @@ fn main() {
 
         let lineages: Vec<&str> = classification.split(';').rev().collect();
 
-        let mut classification_ = String::new();
+        let mut classification_ncbi = String::new();
+        let mut classification_sensitive = String::new();
 
         for i in 0..(lineages.len() - 1) {
             match archaea_map.get(lineages[i]) {
                 Some(v) => {
                     if v.len() == 1 {
-                        print!("{}({}__NCBI);", lineages[i], v[0]);
-                        classification_ = String::from(";")
+                        classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                        classification_sensitive = String::from(";")
                             + &v[0]
-                            //+ &String::from("__NCBI")
-                            + &classification_;
+                            + &String::from("__NCBI")
+                            + &classification_sensitive;
                     } else {
                         if lineages[i + 1] == v[1] {
-                            print!("{}({}__NCBI);", lineages[i], v[0]);
-                            classification_ = String::from(";")
+                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                            classification_sensitive = String::from(";")
                                 + &v[0]
-                                //+ &String::from("__NCBI")
-                                + &classification_;
+                                + &String::from("__NCBI")
+                                + &classification_sensitive;
                         } else {
-                            print!("{}({}__NCBI?);", lineages[i], v[0]);
-                            classification_ = String::from(";")
+                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                            classification_sensitive = String::from(";")
                                 + &v[0]
-                                //+ &String::from("__NCBI?")
-                                + &classification_;
+                                + &String::from("__NCBI?")
+                                + &classification_sensitive;
                         }
                     }
                 }
                 None => match bacteria_map.get(lineages[i]) {
                     Some(v) => {
                         if v.len() == 1 {
-                            print!("{}({}__NCBI);", lineages[i], v[0]);
-                            classification_ = String::from(";")
+                            classification_ncbi = String::from(";") + &v[0] + &classification_ncbi;
+                            classification_sensitive = String::from(";")
                                 + &v[0]
-                                //+ &String::from("__NCBI")
-                                + &classification_;
+                                + &String::from("__NCBI")
+                                + &classification_sensitive;
                         } else {
                             if lineages[i + 1] == v[1] {
-                                print!("{}({}__NCBI;", lineages[i], v[0]);
-                                classification_ = String::from(";")
+                                classification_ncbi =
+                                    String::from(";") + &v[0] + &classification_ncbi;
+                                classification_sensitive = String::from(";")
                                     + &v[0]
-                                    //+ &String::from("__NCBI")
-                                    + &classification_;
+                                    + &String::from("__NCBI")
+                                    + &classification_sensitive;
                             } else {
-                                print!("{}({}__NCBI?);", lineages[i], v[0]);
-                                classification_ = String::from(";")
+                                classification_ncbi =
+                                    String::from(";") + &v[0] + &classification_ncbi;
+                                classification_sensitive = String::from(";")
                                     + &v[0]
-                                    //+ &String::from("__NCBI?")
-                                    + &classification_;
+                                    + &String::from("__NCBI?")
+                                    + &classification_sensitive;
                             }
                         }
                     }
                     None => {
                         let level: Vec<&str> = lineages[i].split("__").collect();
-                        print!("{}({}__NCBI_UNKNOWN);", lineages[i], level[0]);
-                        classification_ = String::from(";")
-                            + &level[0]
-                            + &String::from("__NCBI_UNKNOWN")
-                            + &classification_;
+                        if level.len() == 1 {
+                            classification_ncbi =
+                                String::from(";") + &lineages[i] + &classification_ncbi;
+                            classification_sensitive =
+                                String::from(";") + &lineages[i] + &classification_sensitive;
+                        } else {
+                            classification_ncbi = String::from(";")
+                                + &level[0]
+                                + &String::from("__NCBI_UNKNOWN")
+                                + &classification_ncbi;
+                            classification_sensitive = String::from(";")
+                                + &level[0]
+                                + &String::from("__NCBI_UNKNOWN")
+                                + &classification_sensitive;
+                        }
                     }
                 },
             }
         }
 
-        println!("{}", lineages.last().unwrap());
-        classification_ = String::from("") + lineages.last().unwrap() + &classification_;
+        classification_ncbi = String::from("") + lineages.last().unwrap() + &classification_ncbi;
+        classification_sensitive = String::from("") + lineages.last().unwrap() + &classification_sensitive;
 
-        println!("{}\n", classification_);
+        println!("{}", classification);
+        println!("{}", classification_sensitive);
+        println!("{}\n", classification_ncbi);
+
+        wtr.write_record(&[&classification_ncbi.as_str()]).unwrap();
     }
 }
 
