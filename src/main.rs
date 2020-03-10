@@ -72,23 +72,23 @@ fn main() {
             match archaea_map.get(lineages[i]) {
                 Some(v) => {
                     if v.len() == 1 {
-                        print!("{}({}_ncbi);", lineages[i], v[0]);
+                        print!("{}({}__NCBI);", lineages[i], v[0]);
                         classification_ = String::from(";")
                             + &v[0]
-                            + &String::from("_ncbi")
+                            //+ &String::from("__NCBI")
                             + &classification_;
                     } else {
                         if lineages[i + 1] == v[1] {
-                            print!("{}({}_ncbi);", lineages[i], v[0]);
+                            print!("{}({}__NCBI);", lineages[i], v[0]);
                             classification_ = String::from(";")
                                 + &v[0]
-                                + &String::from("_ncbi")
+                                //+ &String::from("__NCBI")
                                 + &classification_;
                         } else {
-                            print!("{}({}_ncbi?);", lineages[i], v[0]);
+                            print!("{}({}__NCBI?);", lineages[i], v[0]);
                             classification_ = String::from(";")
                                 + &v[0]
-                                + &String::from("_ncbi?")
+                                //+ &String::from("__NCBI?")
                                 + &classification_;
                         }
                     }
@@ -96,33 +96,33 @@ fn main() {
                 None => match bacteria_map.get(lineages[i]) {
                     Some(v) => {
                         if v.len() == 1 {
-                            print!("{}({}_ncbi);", lineages[i], v[0]);
+                            print!("{}({}__NCBI);", lineages[i], v[0]);
                             classification_ = String::from(";")
                                 + &v[0]
-                                + &String::from("_ncbi")
+                                //+ &String::from("__NCBI")
                                 + &classification_;
                         } else {
                             if lineages[i + 1] == v[1] {
-                                print!("{}({}_ncbi);", lineages[i], v[0]);
+                                print!("{}({}__NCBI;", lineages[i], v[0]);
                                 classification_ = String::from(";")
                                     + &v[0]
-                                    + &String::from("_ncbi")
+                                    //+ &String::from("__NCBI")
                                     + &classification_;
                             } else {
-                                print!("{}({}_ncbi_?);", lineages[i], v[0]);
+                                print!("{}({}__NCBI?);", lineages[i], v[0]);
                                 classification_ = String::from(";")
                                     + &v[0]
-                                    + &String::from("_ncbi?")
+                                    //+ &String::from("__NCBI?")
                                     + &classification_;
                             }
                         }
                     }
                     None => {
                         let level: Vec<&str> = lineages[i].split("__").collect();
-                        print!("{}({}__ncbi_unknown);", lineages[i], level[0]);
+                        print!("{}({}__NCBI_UNKNOWN);", lineages[i], level[0]);
                         classification_ = String::from(";")
                             + &level[0]
-                            + &String::from("__ncbi_unknown")
+                            + &String::from("__NCBI_UNKNOWN")
                             + &classification_;
                     }
                 },
