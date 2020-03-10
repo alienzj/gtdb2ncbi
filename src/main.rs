@@ -122,7 +122,7 @@ fn main() {
                     }
                     None => {
                         let level: Vec<&str> = lineages[i].split("__").collect();
-                        if level.len() == 1 {
+                        if level[1] == "" {
                             classification_ncbi =
                                 String::from(";") + &lineages[i] + &classification_ncbi;
                             classification_sensitive =
@@ -243,3 +243,13 @@ fn parse_excel(raw_xlsx: &[u8]) -> Result<HashMap<String, Vec<String>>, String> 
     Ok(tax_map)
 }
 */
+
+#[test]
+fn split() {
+    assert_eq!("s__".trim().split("__").collect::<Vec<&str>>()[1], "");
+}
+
+#[test]
+fn split_() {
+    assert_eq!("s__a".trim().split("__").collect::<Vec<&str>>().len(), 1);
+}
