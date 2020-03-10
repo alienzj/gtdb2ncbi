@@ -24,4 +24,4 @@ cargo build --release
 #+END_SRC
 
 * Results
-[[file:tests/gtdb2ncbi_oral_mgs.jpg]]
+[[file:tests/gtdb2ncbi_oral_mgs.png]]
