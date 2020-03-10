@@ -62,27 +62,27 @@ fn main() {
         let lineages: Vec<&str> = classification.split(';').rev().collect();
 
         for i in 0..lineages.len() {
-            match archaea_map.get_key_value(lineages[i]) {
+            match archaea_map.get(lineages[i]) {
                 Some(v) => {
-                    if v.1.len() == 1 {
-                        print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                    if v.len() == 1 {
+                        print!("{}({}_ncbi);", lineages[i], v[0]);
                     } else {
-                        if lineages[i + 1] == v.1[1] {
-                            print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                        if lineages[i + 1] == v[1] {
+                            print!("{}({}_ncbi);", lineages[i], v[0]);
                         } else {
-                            print!("{}({}_ncbi?);", lineages[i], v.1[0]);
+                            print!("{}({}_ncbi?);", lineages[i], v[0]);
                         }
                     }
                 }
-                None => match bacteria_map.get_key_value(lineages[i]) {
+                None => match bacteria_map.get(lineages[i]) {
                     Some(v) => {
-                        if v.1.len() == 1 {
-                            print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                        if v.len() == 1 {
+                            print!("{}({}_ncbi);", lineages[i], v[0]);
                         } else {
-                            if lineages[i + 1] == v.1[1] {
-                                print!("{}({}_ncbi);", lineages[i], v.1[0]);
+                            if lineages[i + 1] == v[1] {
+                                print!("{}({}_ncbi);", lineages[i], v[0]);
                             } else {
-                                print!("{}({}_ncbi_?);", lineages[i], v.1[0]);
+                                print!("{}({}_ncbi_?);", lineages[i], v[0]);
                             }
                         }
                     }
