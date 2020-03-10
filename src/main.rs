@@ -55,8 +55,13 @@ fn main() {
         .from_path(output)
         .unwrap();
 
+    let mut headers = rdr.headers().unwrap().to_owned();
+    headers.push_field("NCBI_taxonomy");
+
+    wtr.write_record(&headers).unwrap();
+
     for result in rdr.records() {
-        let record = result.unwrap();
+        let mut record = result.unwrap();
         // we assume the gtdb classification locate at the 3th column
         let classification = record.get(2).unwrap();
 
@@ -145,8 +150,12 @@ fn main() {
         println!("{}", classification_sensitive);
         println!("{}\n", classification_ncbi);
 
-        wtr.write_record(&[&classification_ncbi.as_str()]).unwrap();
+        record.push_field(&classification_ncbi);
+
+        wtr.write_record(&record).unwrap();
     }
+
+    wtr.flush().unwrap();
 }
 
 fn parse(raw_xlsx: &[u8]) -> HashMap<String, Vec<String>> {
