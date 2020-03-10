@@ -1,7 +1,3 @@
-extern crate calamine;
-extern crate clap;
-extern crate csv;
-
 use calamine::{Reader, Xlsx};
 use clap::{App, Arg};
 use csv::{ReaderBuilder, Trim, WriterBuilder};
