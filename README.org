@@ -11,6 +11,8 @@
 
 * Description
 A command line tool which convert taxonomy system from GTDB to NCBI.
+Before using this tool, please see this [[https://github.com/Ecogenomics/GTDBTk/issues/61][issue]]. There is't a 1:1 relationship
+bwtween GTDB and NCBI taxa.
 
 * Prerequisites
 - Microbiology
