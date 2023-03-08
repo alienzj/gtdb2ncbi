@@ -7,8 +7,8 @@ use std::io::Cursor;
 use std::process;
 
 fn main() {
-    const ARCHAEA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_archaea.xlsx");
-    const BACTERIA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_bacteria.xlsx");
+    const ARCHAEA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_r207_archaea.xlsx");
+    const BACTERIA_XLSX: &[u8] = include_bytes!("../data/ncbi_vs_gtdb_r207_bacteria.xlsx");
 
     let archaea_map = parse(ARCHAEA_XLSX);
     let bacteria_map = parse(BACTERIA_XLSX);
